@@ -1,0 +1,246 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+:root {
+    --primary-green: #2d5f4f;
+    --medium-green: #6b9080;
+    --light-green: #8fae9e;
+    --white: #ffffff;
+    --text-dark: #1a1a1a;
+}
+
+body {
+    background: linear-gradient(135deg, #f5f9f7 0%, #e8f3ee 100%);
+    color: var(--text-dark);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Navbar Styles */
+.navbar {
+    background: rgba(45, 95, 79, 0.95);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+}
+
+.nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: 1px;
+}
+
+.nav-menu {
+    display: flex;
+    list-style: none;
+    gap: 2.5rem;
+}
+
+.nav-menu a {
+    color: var(--white);
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+    padding: 5px 0;
+}
+
+.nav-menu a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--white);
+    transition: width 0.3s ease;
+}
+
+.nav-menu a:hover::after {
+    width: 100%;
+}
+
+.logout-btn {
+    background: var(--white);
+    color: var(--primary-green);
+    border: none;
+    padding: 10px 25px;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.hamburger {
+    display: none;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.hamburger span {
+    width: 25px;
+    height: 3px;
+    background: var(--white);
+    margin: 4px 0;
+    transition: 0.3s;
+}
+
+/* Placeholder Content */
+.placeholder-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.message-container {
+    text-align: center;
+    animation: fadeIn 0.8s ease-in;
+}
+
+.icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    animation: bounce 2s infinite;
+}
+
+.message-container h1 {
+    font-size: 48px;
+    color: var(--primary-green);
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.message-container p {
+    font-size: 20px;
+    color: var(--text-dark);
+    margin-bottom: 15px;
+    opacity: 0.8;
+}
+
+.back-btn {
+    display: inline-block;
+    margin-top: 30px;
+    padding: 15px 40px;
+    background: var(--primary-green);
+    color: var(--white);
+    text-decoration: none;
+    border-radius: 30px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background: var(--medium-green);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(45, 95, 79, 0.3);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-15px);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .nav-menu {
+        gap: 1.5rem;
+    }
+    
+    .nav-menu a {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    .nav-menu {
+        position: fixed;
+        left: -100%;
+        top: 70px;
+        flex-direction: column;
+        background: var(--primary-green);
+        width: 100%;
+        text-align: center;
+        transition: 0.3s;
+        padding: 2rem 0;
+        gap: 1rem;
+    }
+    
+    .nav-menu.active {
+        left: 0;
+    }
+    
+    .hamburger {
+        display: flex;
+    }
+    
+    .message-container h1 {
+        font-size: 36px;
+    }
+    
+    .message-container p {
+        font-size: 18px;
+    }
+    
+    .icon {
+        font-size: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-container {
+        padding: 1rem;
+    }
+    
+    .logo {
+        font-size: 22px;
+    }
+    
+    .message-container h1 {
+        font-size: 28px;
+    }
+    
+    .message-container p {
+        font-size: 16px;
+    }
+}
