@@ -1,0 +1,73 @@
+// Dark Theme Color Palette
+$primary-bg: #0f0f0f;
+$secondary-bg: #1a1a1a;
+$surface-bg: #2a2a2a;
+$card-bg: #333333;
+
+$text-primary: #ffffff;
+$text-secondary: #cccccc;
+$text-muted: #888888;
+
+$accent-primary: #00d4ff;
+$accent-secondary: #ff6b6b;
+$accent-tertiary: #4ecdc4;
+
+// Legacy color variables for compatibility
+$primary-blue: $accent-primary;
+$secondary-blue: $accent-secondary;
+$primary-purple: #9b59b6;
+
+$border-color: #404040;
+$border-light: #555555;
+
+// Gradients
+$surface-gradient: linear-gradient(135deg, $primary-bg 0%, $secondary-bg 100%);
+$accent-gradient: linear-gradient(135deg, $accent-primary 0%, $accent-secondary 100%);
+$card-gradient: linear-gradient(135deg, $card-bg 0%, #404040 100%);
+
+// Shadows
+$shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+$shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+$shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+$shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+$shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+
+// Spacing
+$spacing-xs: 0.25rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+$spacing-xl: 2rem;
+
+// Border Radius
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+$radius-full: 9999px;
+$radius-full: 9999px;
+
+// Legacy border-radius variables for compatibility
+$border-radius-sm: $radius-sm;
+$border-radius-md: $radius-md;
+$border-radius-lg: $radius-lg;
+$border-radius-xl: $radius-xl;
+$border-radius-full: $radius-full;
+
+// Transitions
+$transition-fast: 0.15s ease;
+$transition-normal: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// Legacy variables for compatibility
+$white: $text-primary;
+$gray-50: #f9f9f9;
+$gray-100: $text-secondary;
+$gray-200: $text-muted;
+$gray-300: $border-light;
+$gray-400: $border-color;
+$gray-500: $secondary-bg;
+$gray-600: $surface-bg;
+$gray-700: $card-bg;
+$gray-800: $primary-bg;
+$gray-900: #000000;

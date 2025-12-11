@@ -1,0 +1,451 @@
+// Widget component styles
+.widget {
+  background: $card-gradient;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-xl;
+  padding: 1.5rem;
+  box-shadow: $shadow-lg;
+  transition: all $transition-normal;
+  color: $text-primary;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &:hover {
+    box-shadow: $shadow-lg;
+  }
+
+  .widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+
+    .widget-icon {
+      padding: 0.5rem;
+      border-radius: $border-radius-lg;
+      background: linear-gradient(135deg, $primary-blue 0%, $primary-purple 100%);
+    }
+
+    .ai-button {
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, $primary-blue 0%, $primary-purple 100%);
+      color: $white;
+      border-radius: $border-radius-full;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+
+  .widget-content {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .widget-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(255, 107, 107, 0.1) 100%);
+    opacity: 0;
+    transition: opacity $transition-normal;
+    border-radius: $border-radius-xl;
+  }
+
+  &:hover .widget-overlay {
+    opacity: 1;
+  }
+}
+
+// Sidebar styles
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 16rem;
+  background: $surface-gradient;
+  border-right: 1px solid $border-color;
+  box-shadow: $shadow-lg;
+  z-index: 50;
+  transition: width $transition-normal;
+  color: $text-primary;
+
+  &.collapsed {
+    width: 4rem;
+
+    .sidebar-content {
+      padding: 1rem 0.5rem;
+    }
+
+    .sidebar-header {
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1rem;
+
+      .title {
+        display: none;
+      }
+    }
+
+    .sidebar-nav {
+      .nav-button {
+        padding: 0.75rem;
+        text-align: center;
+        justify-content: center;
+
+        .nav-text {
+          display: none;
+        }
+      }
+    }
+
+    .sidebar-footer {
+      .impact-card {
+        display: none;
+      }
+    }
+  }
+
+  .sidebar-content {
+    padding: 1.5rem;
+  }
+
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    position: relative;
+
+    .logo {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: $border-radius-xl;
+      background: linear-gradient(135deg, $accent-primary 0%, $accent-secondary 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, $accent-primary 0%, $accent-secondary 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .collapse-button {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      width: 2rem;
+      height: 2rem;
+      border-radius: $border-radius-md;
+      background: $secondary-bg;
+      border: 1px solid $border-color;
+      color: $text-secondary;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all $transition-fast;
+      cursor: pointer;
+
+      &:hover {
+        background: $surface-bg;
+        color: $text-primary;
+        transform: scale(1.05);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+    }
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .nav-button {
+      width: 100%;
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border-radius: $border-radius-xl;
+      font-weight: 500;
+      transition: all $transition-normal;
+      background-color: transparent;
+      border: none;
+      color: $text-secondary;
+
+      &.active {
+        background: linear-gradient(135deg, $accent-primary 0%, $accent-secondary 100%);
+        color: $text-primary;
+        box-shadow: $shadow-lg;
+      }
+
+      &:not(.active) {
+        &:hover {
+          background-color: $secondary-bg;
+          color: $text-primary;
+        }
+      }
+    }
+  }
+
+  .sidebar-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1.5rem;
+
+    .impact-card {
+      background: $card-gradient;
+      border: 1px solid $border-color;
+      border-radius: $border-radius-xl;
+      padding: 1rem;
+
+      .impact-title {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: $text-secondary;
+      }
+
+      .impact-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, $accent-primary 0%, $accent-secondary 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+
+      .impact-comparison {
+        font-size: 0.75rem;
+        color: $text-muted;
+        margin-top: 0.25rem;
+      }
+    }
+  }
+}
+
+// Main content styles
+.main-content {
+  margin-left: 16rem;
+  padding: 2rem;
+  transition: margin-left $transition-normal;
+
+  &.sidebar-collapsed {
+    margin-left: 4rem;
+  }
+
+  .header {
+    margin-bottom: 2rem;
+    animation: fade-in 0.5s ease-out;
+
+    .greeting {
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: $text-primary;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: $text-secondary;
+    }
+  }
+
+  .content-grid {
+    display: grid;
+    gap: 2rem;
+
+    &.grid-3 {
+      grid-template-columns: repeat(3, 1fr);
+
+      > * {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+    }
+
+    &.grid-2 {
+      grid-template-columns: repeat(2, 1fr);
+
+      > * {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+    }
+  }
+}
+
+// Stats card styles
+.stats-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .stats-info {
+    .stats-value {
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: $text-primary;
+    }
+
+    .stats-label {
+      font-size: 0.875rem;
+      color: $text-secondary;
+      margin-top: 0.25rem;
+    }
+  }
+
+  .stats-emoji {
+    font-size: 3.75rem;
+  }
+}
+
+// Progress bar styles
+.progress-bar {
+  margin-top: 1rem;
+  height: 0.5rem;
+  background-color: $secondary-bg;
+  border-radius: $border-radius-full;
+  overflow: hidden;
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, $accent-tertiary 0%, $accent-primary 100%);
+    border-radius: $border-radius-full;
+  }
+}
+
+// Input card styles
+.input-card {
+  padding: 1rem;
+  border-radius: $border-radius-xl;
+  margin-bottom: 1rem;
+
+  &.transport {
+    background-color: $secondary-bg;
+    border: 1px solid $border-color;
+  }
+
+  &.water {
+    background-color: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+  }
+
+  &.energy {
+    background-color: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+  }
+
+  &.food {
+    background-color: rgba(76, 205, 196, 0.1);
+    border: 1px solid rgba(76, 205, 196, 0.3);
+  }
+
+  .input-label {
+    font-size: 0.875rem;
+    color: $text-secondary;
+  }
+
+  .input-value {
+    font-weight: 600;
+    color: $text-primary;
+  }
+}
+
+// Chart container styles
+.chart-container {
+  width: 100%;
+  height: 200px;
+  padding: 1rem;
+
+  &.large {
+    height: 250px;
+  }
+
+  &.small {
+    height: 80px;
+  }
+
+  &.tiny {
+    height: 100px;
+  }
+}
+
+// AI assistant styles
+.ai-assistant {
+  .ai-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+    border-radius: $border-radius-xl;
+    padding: 1.5rem;
+    text-align: center;
+
+    .ai-icon {
+      width: 4rem;
+      height: 4rem;
+      margin: 0 auto 1rem;
+      color: $primary-blue;
+    }
+
+    .ai-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: $text-primary;
+      margin-bottom: 0.5rem;
+    }
+
+    .ai-description {
+      color: $text-secondary;
+    }
+
+    .ai-features {
+      margin-top: 1rem;
+      max-width: 28rem;
+      margin-left: auto;
+      margin-right: auto;
+
+      .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+
+        .feature-check {
+          color: #22c55e;
+        }
+
+        .feature-text {
+          font-size: 0.875rem;
+          color: $text-secondary;
+        }
+      }
+    }
+
+    .ai-button {
+      margin-top: 1.5rem;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, $primary-blue 0%, $primary-purple 100%);
+      color: $white;
+      border-radius: $border-radius-full;
+      font-weight: 600;
+
+      &:hover {
+        box-shadow: $shadow-lg;
+      }
+    }
+  }
+}
