@@ -103,7 +103,7 @@ class HomePage {
                         <div class="text-white space-y-6 animate-fade-in">
                             <div class="inline-block bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium">
                                 <i class='bx bx-time-five mr-2'></i>
-                                ${hero.icon || '🌍'}
+                                Track Daily Impact
                             </div>
                             <h1 class="text-5xl md:text-6xl font-bold leading-tight">
                                 ${hero.title}
@@ -115,10 +115,10 @@ class HomePage {
                                 ${hero.description}
                             </p>
                             <div class="flex flex-wrap gap-4 pt-4">
-                                <button class="bg-white text-primary-green px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition duration-300 shadow-lg">
+                                <button class="bg-white text-primary-green px-8 py-3 rounded-full font-semibold hover:bg-gray-100 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                                     Get Started
                                 </button>
-                                <button class="border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white/10 transition duration-300">
+                                <button class="border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white/10 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                                     Learn More
                                 </button>
                             </div>
@@ -148,23 +148,42 @@ class HomePage {
         const { sections } = this.content;
         return sections.map((section, index) => {
             const isEven = index % 2 === 0;
+            const bulletPoints = section.bullets ? section.bullets.map(bullet => `
+                <li class="flex items-start gap-3 text-gray-600">
+                    <i class="bx bx-check-circle text-2xl text-primary-green mt-0.5 flex-shrink-0"></i>
+                    <span class="text-base leading-relaxed">${bullet}</span>
+                </li>
+            `).join('') : '';
+            
             return `
                 <section class="py-20 px-4 ${isEven ? 'bg-white' : 'bg-gray-50'}">
                     <div class="max-w-6xl mx-auto">
                         <div class="flex flex-col md:flex-row gap-12 items-center ${!isEven ? 'md:flex-row-reverse' : ''}">
                             <div class="md:w-1/2 space-y-6">
-                                <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-green to-medium-green rounded-2xl text-3xl shadow-lg">
-                                    ${section.icon}
+                                <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-green to-medium-green rounded-2xl text-white text-3xl shadow-lg transform hover:scale-110 transition-transform duration-300">
+                                    <i class='bx ${section.icon}'></i>
                                 </div>
                                 <h2 class="text-4xl font-bold text-gray-900">
                                     ${section.title}
                                 </h2>
-                                <p class="text-lg text-gray-600 leading-relaxed">
+                                <p class="text-lg text-gray-700 font-medium">
                                     ${section.description}
                                 </p>
+                                ${bulletPoints ? `<ul class="space-y-3">${bulletPoints}</ul>` : ''}
                             </div>
                             <div class="md:w-1/2">
-                                <div class="aspect-video rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 shadow-xl"></div>
+                                <div class="aspect-video rounded-2xl shadow-xl overflow-hidden transform hover:scale-105 transition-transform duration-300">
+                                    ${section.image ? `
+                                        <img 
+                                            src="${section.image}" 
+                                            alt="${section.title}"
+                                            class="w-full h-full object-cover"
+                                            loading="lazy"
+                                        />
+                                    ` : `
+                                        <div class="aspect-video rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 shadow-xl"></div>
+                                    `}
+                                </div>
                             </div>
                         </div>
                     </div>

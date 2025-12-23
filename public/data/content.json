@@ -2,38 +2,75 @@
   "hero": {
     "title": "Understand Your Daily Environmental Impact",
     "subtitle": "Simple. Clear. Sustainable.",
-    "description": "EcoGuide helps you understand how your daily habits affect the environment. Track transport, energy, water usage, and more—then watch your habits improve over time."
+    "description": "EcoGuide helps you understand how your daily habits affect the environment. Track transport, energy, water usage, and more—then watch your habits improve over time.",
+    "videoPlaceholder": "/images/hero.jpg"
   },
   "sections": [
     {
       "title": "What EcoGuide Is",
-      "description": "EcoGuide is a simple tool that helps people understand how their daily habits affect the environment. Most of us live our lives without noticing how small actions add up—we use transport, switch on appliances, eat certain foods, buy items, and produce waste. Each of these actions has an impact, but the impact is not always visible. EcoGuide makes this impact easier to see, showing you how your habits contribute to environmental change in a clear and practical way.",
-      "icon": "bx-leaf"
+      "description": "A simple tool to track and understand your environmental footprint:",
+      "bullets": [
+        "Track daily habits: transport, energy, water, food, and waste",
+        "See how small actions add up over time",
+        "Make invisible impacts visible and clear"
+      ],
+      "icon": "bx-leaf",
+      "image": "/images/section1.jpg"
     },
     {
       "title": "Why We Created EcoGuide",
-      "description": "Many people want to live more sustainably but do not know where to start. The information available can feel confusing or overwhelming. Most tools require exact numbers or complex calculations, which are not realistic for everyday use. EcoGuide was created to solve this problem. It keeps things simple, focuses on habits people can easily remember, and gives users a way to understand their behaviour without making the process difficult.",
-      "icon": "bx-bulb"
+      "description": "Making sustainability accessible for everyone:",
+      "bullets": [
+        "Most people want to live sustainably but don't know where to start",
+        "EcoGuide keeps it simple and focuses on easy habits",
+        "Track behaviour without complicated processes"
+      ],
+      "icon": "bx-bulb",
+      "image": "/images/section2.jpg"
     },
     {
       "title": "What the Project Aims to Do",
-      "description": "EcoGuide has a few clear aims: to help people understand their own habits (awareness is the first step toward change), to make sustainability easy to track (users only answer simple questions they already know the answers to), to provide a daily sustainability score (showing how the day went and how habits change over time), to offer small practical suggestions (simple advice you can actually follow the next day), and to support steady improvement (the app encourages long-term behaviour change, not perfection).",
-      "icon": "bx-target-lock"
+      "description": "Clear goals for sustainable living:",
+      "bullets": [
+        "Build awareness of your daily habits",
+        "Provide daily sustainability scores",
+        "Show progress and patterns over time"
+      ],
+      "icon": "bx-target-lock",
+      "image": "/images/section3.jpg"
     },
     {
-      "title": "What Problems EcoGuide Addresses",
-      "description": "EcoGuide responds to a few common issues: people do not know which of their habits matter most, existing tools are too complicated for daily use, there is no simple way to track progress over time, and people rarely get feedback that helps them improve. EcoGuide fills this gap by providing a tool that is easy, consistent, and clear.",
-      "icon": "bx-check-shield"
+      "title": "Problems We Solve",
+      "description": "Addressing common sustainability challenges:",
+      "bullets": [
+        "Unclear which habits matter most",
+        "No easy way to track progress",
+        "EcoGuide fills these gaps with simplicity and clarity"
+      ],
+      "icon": "bx-check-shield",
+      "image": "/images/section4.jpg"
     },
     {
       "title": "How EcoGuide Works",
-      "description": "EcoGuide collects basic daily details such as: how you travelled, if you used AC or a geyser, whether you had a long shower or did laundry, what meals you ate, how much waste you created, and if you made a purchase. These inputs create a picture of your daily environmental footprint. The app then gives you a score and a short suggestion. You can track your habits on a dashboard and over time see patterns—understanding where you are improving and where you are not.",
-      "icon": "bx-cog"
+      "description": "Simple daily tracking in minutes:",
+      "bullets": [
+        "Answer basic questions about transport, energy, water",
+        "Get your daily environmental score",
+        "View patterns and improvements on your dashboard"
+      ],
+      "icon": "bx-cog",
+      "image": "/images/section5.jpg"
     },
     {
       "title": "Who EcoGuide Is For",
-      "description": "EcoGuide is for anyone who wants to understand their habits better. It does not require technical knowledge. It does not expect perfect accuracy. It works for students, working adults, families, and communities. If someone wants to live more sustainably but feels unsure where to begin, EcoGuide gives them a place to start.",
-      "icon": "bx-group"
+      "description": "Built for everyone committed to change:",
+      "bullets": [
+        "Students, working adults, and families",
+        "Anyone wanting to live more sustainably",
+        "No technical knowledge required"
+      ],
+      "icon": "bx-group",
+      "image": "/images/section6.jpg"
     }
   ],
   "cta": {

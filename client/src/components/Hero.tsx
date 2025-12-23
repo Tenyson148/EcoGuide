@@ -4,9 +4,10 @@ interface HeroProps {
   title: string;
   subtitle: string;
   description: string;
+  videoPlaceholder?: string;
 }
 
-const Hero: React.FC<HeroProps> = ({ title, subtitle, description }) => {
+const Hero: React.FC<HeroProps> = ({ title, subtitle, description, videoPlaceholder }) => {
   return (
     <section className="relative bg-gradient-to-br from-[#2d5f4f] via-[#6b9080] to-[#8fae9e] py-24 px-4 overflow-hidden">
       <div className="absolute inset-0 opacity-10">
@@ -41,8 +42,18 @@ const Hero: React.FC<HeroProps> = ({ title, subtitle, description }) => {
           </div>
           
           <div className="relative">
-            <div className="video-placeholder aspect-video rounded-2xl shadow-2xl border-4 border-white/20 backdrop-blur-sm transform hover:scale-105 transition-transform duration-300">
-            </div>
+            {videoPlaceholder ? (
+              <div className="aspect-video rounded-2xl shadow-2xl border-4 border-white/20 overflow-hidden transform hover:scale-105 transition-transform duration-300">
+                <img 
+                  src={videoPlaceholder} 
+                  alt="EcoGuide Preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="video-placeholder aspect-video rounded-2xl shadow-2xl border-4 border-white/20 backdrop-blur-sm transform hover:scale-105 transition-transform duration-300">
+              </div>
+            )}
           </div>
         </div>
       </div>

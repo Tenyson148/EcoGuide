@@ -1,5 +1,3 @@
-// Daily Logs Dashboard with Simulated AI Chatbot
-
 class DailyLogsApp {
     constructor() {
         this.dailyData = {
@@ -8,54 +6,21 @@ class DailyLogsApp {
             water: { long_shower: false, laundry: false }
         };
         this.conversationHistory = [];
-        this.currentQuestionIndex = 0;
-        this.questionFlow = [
-            {
-                question: "Hi! I'm your EcoGuide assistant 🌿 Let's track your environmental impact for today. First, how did you travel today? (e.g., 'drove 20km' or 'took bus 10km' or 'walked/cycled')",
-                category: 'transport',
-                patterns: {
-                    car: /(?:car|drove|drive|driving).*?(\d+)\s*k?m?/i,
-                    public: /(?:bus|train|metro|public).*?(\d+)\s*k?m?/i,
-                    walk_cycle: /(?:walk|cycle|bike|foot)/i,
-                    none: /(?:no|nothing|didn't|didnt|stay|home)/i
-                }
-            },
-            {
-                question: "Great! Now about energy usage - did you use AC today? If yes, for how many hours? (e.g., 'yes, 3 hours' or 'no')",
-                category: 'energy',
-                patterns: {
-                    yes_with_hours: /(?:yes|yeah).*?(\d+)\s*(?:hour|hr)?/i,
-                    hours_only: /^\d+\s*(?:hour|hr)?s?$/i,
-                    yes: /^(?:yes|yeah|yep|yup)$/i,
-                    no: /^(?:no|nope|nah|didn't|didnt)$/i
-                }
-            },
-            {
-                question: "Did you use a geyser/water heater today? (yes/no)",
-                category: 'geyser',
-                patterns: {
-                    yes: /(?:yes|yeah|yep|yup)/i,
-                    no: /(?:no|nope|nah|didn't|didnt)/i
-                }
-            },
-            {
-                question: "How about water usage - did you take a long shower today? (yes/no)",
-                category: 'water_shower',
-                patterns: {
-                    yes: /(?:yes|yeah|yep|yup)/i,
-                    no: /(?:no|nope|nah|didn't|didnt|short)/i
-                }
-            },
-            {
-                question: "Last question! Did you do laundry today? (yes/no)",
-                category: 'water_laundry',
-                patterns: {
-                    yes: /(?:yes|yeah|yep|yup)/i,
-                    no: /(?:no|nope|nah|didn't|didnt)/i
-                }
-            }
-        ];
-        this.awaitingResponse = false;
+        this.dataCollected = false;
+        this.currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        
+        this.GEMINI_API_KEY = 'AIzaSyCT8zuQHfpCQuV07A47gZHr5wHyLWLg1KA';
+        this.GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+        
+        this.systemPrompt = `You are an eco-friendly assistant helping users track their daily environmental impact.
+Your goal is to collect the following data naturally through conversation:
+1. Transport: Car travel (km), Public transport (km), Walking/Cycling
+2. Energy: AC usage (yes/no and hours if yes), Geyser/water heater usage (yes/no)
+3. Water: Long shower (yes/no), Laundry (yes/no)
+
+After collecting all data, calculate an eco score (0-100) and provide personalized tips.
+Be friendly, conversational, and encouraging. Ask follow-up questions if answers are unclear.
+Extract numbers and yes/no answers from natural responses.`;
         
         this.init();
     }
@@ -227,11 +192,9 @@ class DailyLogsApp {
     }
 
     startConversation() {
-        this.currentQuestionIndex = 0;
-        const firstQuestion = this.questionFlow[0].question;
-        this.addMessage(firstQuestion, 'bot');
-        this.conversationHistory.push({ role: 'assistant', content: firstQuestion });
-        this.awaitingResponse = true;
+        const greeting = `Hi! 👋 I'm your EcoGuide assistant. I'll help you track your environmental impact for ${this.currentDate}. Let's start with a simple question: How did you travel today? (You can say something like "drove 20km" or "took the bus" or "walked")`;
+        this.addMessage(greeting, 'bot');
+        this.conversationHistory.push({ role: 'assistant', content: greeting });
     }
 
     sendMessage() {
@@ -240,7 +203,6 @@ class DailyLogsApp {
         
         if (!message) return;
         
-        // Validate input
         if (message.length > 500) {
             this.addMessage("Your message is too long. Please keep it under 500 characters.", 'bot');
             return;
@@ -250,227 +212,212 @@ class DailyLogsApp {
         input.value = '';
         this.conversationHistory.push({ role: 'user', content: message });
 
-        // Show typing indicator
         this.addTypingIndicator();
 
-        // Simulate AI thinking delay
-        setTimeout(() => {
-            this.removeTypingIndicator();
-            this.processUserResponse(message);
-        }, 800 + Math.random() * 400); // 0.8-1.2 seconds delay
+        // Call Gemini AI
+        this.callGeminiAI(message);
     }
 
-    processUserResponse(userMessage) {
-        const currentQ = this.questionFlow[this.currentQuestionIndex];
-        
-        // Edge case: empty or whitespace-only message
-        if (!userMessage || userMessage.trim().length === 0) {
-            this.addMessage("I didn't catch that. Could you please respond again?", 'bot');
-            return;
+    async callGeminiAI(userMessage) {
+        try {
+            const response = await fetch(`${this.GEMINI_API_URL}?key=${this.GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: `${this.systemPrompt}\n\nCurrent data collected: ${JSON.stringify(this.dailyData)}\n\nUser says: "${userMessage}"\n\nRespond naturally and extract any relevant data. If all data points are collected, calculate eco score and provide summary.`
+                        }]
+                    }]
+                })
+            });
+
+            const data = await response.json();
+            this.removeTypingIndicator();
+
+            // Check for API errors
+            if (data.error) {
+                console.error('Gemini API Error:', data.error);
+                if (data.error.code === 400) {
+                    this.addMessage("⚠️ API key error. Please verify your Gemini API key is correct and has the right permissions. Get a free key at https://aistudio.google.com/apikey", 'bot');
+                } else if (data.error.code === 429) {
+                    this.addMessage("⏰ Rate limit reached. Please wait a moment and try again.", 'bot');
+                } else {
+                    this.addMessage(`❌ API Error: ${data.error.message}`, 'bot');
+                }
+                return;
+            }
+
+            // Get AI response
+            const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "I didn't quite understand. Could you rephrase that?";
+            this.addMessage(aiResponse, 'bot');
+            this.conversationHistory.push({ role: 'assistant', content: aiResponse });
+
+            // Extract data from conversation
+            this.extractDataFromConversation(userMessage);
+
+            // Check if data collection is complete
+            if (this.isDataComplete() && !this.dataCollected) {
+                this.dataCollected = true;
+                this.saveDailyLog();
+            }
+
+            // Update dashboard
+            this.render();
+
+        } catch (error) {
+            this.removeTypingIndicator();
+            console.error('Error calling Gemini API:', error);
+            this.addMessage("❌ Failed to connect to AI. Please check your internet connection and try again.", 'bot');
         }
-        
-        // Edge case: unclear/confusing response
-        const lowerMsg = userMessage.toLowerCase().trim();
-        
-        // Extract data based on current question category
-        let dataExtracted = false;
-        
-        switch(currentQ.category) {
-            case 'transport':
-                dataExtracted = this.extractTransportData(lowerMsg, currentQ.patterns);
-                break;
-            case 'energy':
-                dataExtracted = this.extractEnergyData(lowerMsg, currentQ.patterns);
-                break;
-            case 'geyser':
-                dataExtracted = this.extractGeyserData(lowerMsg, currentQ.patterns);
-                break;
-            case 'water_shower':
-                dataExtracted = this.extractWaterShowerData(lowerMsg, currentQ.patterns);
-                break;
-            case 'water_laundry':
-                dataExtracted = this.extractWaterLaundryData(lowerMsg, currentQ.patterns);
-                break;
+    }
+
+    extractDataFromConversation(message) {
+        const msg = message.toLowerCase();
+        const numbers = msg.match(/\d+/g);
+
+        // Transport
+        if (/car|drove|drive/.test(msg) && numbers) {
+            this.dailyData.transport.car = parseInt(numbers[0]);
         }
-        
-        if (!dataExtracted) {
-            // Handle unclear response
-            this.addMessage(this.getHelpMessage(currentQ.category), 'bot');
-            return;
+        if (/bus|train|metro|public/.test(msg) && numbers) {
+            this.dailyData.transport.public = parseInt(numbers[0]);
         }
-        
-        // Give positive feedback
-        const acknowledgments = [
-            "Got it! 📝",
-            "Thanks for sharing! ✓",
-            "Noted! 👍",
-            "Perfect! ✨",
-            "Understood! 🌟"
-        ];
-        const ack = acknowledgments[Math.floor(Math.random() * acknowledgments.length)];
-        
-        // Move to next question
-        this.currentQuestionIndex++;
-        
-        if (this.currentQuestionIndex < this.questionFlow.length) {
-            const nextQuestion = this.questionFlow[this.currentQuestionIndex].question;
-            this.addMessage(`${ack} ${nextQuestion}`, 'bot');
-            this.conversationHistory.push({ role: 'assistant', content: nextQuestion });
-        } else {
-            // Conversation complete
-            this.completeTracking();
+        if (/walk|cycle|bike/.test(msg)) {
+            this.dailyData.transport.walk_cycle = 1;
         }
-        
-        // Update dashboard
+
+        // AC usage
+        if (/ac|air.?condition/.test(msg)) {
+            if (/yes|yeah|yep/.test(msg)) {
+                this.dailyData.energy.ac = true;
+                if (numbers) {
+                    this.dailyData.energy.ac_hours = parseInt(numbers[0]);
+                }
+            } else if (/no|nope|didn't/.test(msg)) {
+                this.dailyData.energy.ac = false;
+                this.dailyData.energy.ac_hours = 0;
+            }
+        }
+
+        // Geyser
+        if (/geyser|water.?heater/.test(msg)) {
+            this.dailyData.energy.geyser = /yes|yeah|yep/.test(msg);
+        }
+
+        // Water
+        if (/shower/.test(msg)) {
+            this.dailyData.water.long_shower = /yes|yeah|yep|long/.test(msg);
+        }
+        if (/laundry|wash/.test(msg)) {
+            this.dailyData.water.laundry = /yes|yeah|yep/.test(msg);
+        }
+
+        this.updateDashboard();
+    }
+
+    isDataComplete() {
+        return this.dailyData.transport.car >= 0 ||
+               this.dailyData.transport.public >= 0 ||
+               this.dailyData.transport.walk_cycle >= 0;
+    }
+
+    updateDashboard() {
         this.render();
     }
 
-    extractTransportData(msg, patterns) {
-        // Check for car travel
-        const carMatch = msg.match(patterns.car);
-        if (carMatch) {
-            this.dailyData.transport.car = parseInt(carMatch[1]);
-            return true;
-        }
-        
-        // Check for public transport
-        const publicMatch = msg.match(patterns.public);
-        if (publicMatch) {
-            this.dailyData.transport.public = parseInt(publicMatch[1]);
-            return true;
-        }
-        
-        // Check for walking/cycling
-        if (patterns.walk_cycle.test(msg)) {
-            this.dailyData.transport.walk_cycle = 1; // Flag as active
-            return true;
-        }
-        
-        // Check for no travel
-        if (patterns.none.test(msg)) {
-            return true; // Valid response, no travel
-        }
-        
-        return false;
-    }
-    
-    extractEnergyData(msg, patterns) {
-        // Check for yes with hours
-        const yesHoursMatch = msg.match(patterns.yes_with_hours);
-        if (yesHoursMatch) {
-            this.dailyData.energy.ac = true;
-            this.dailyData.energy.ac_hours = parseInt(yesHoursMatch[1]);
-            return true;
-        }
-        
-        // Check for just hours (implies yes)
-        if (patterns.hours_only.test(msg)) {
-            const hoursMatch = msg.match(/\d+/);
-            this.dailyData.energy.ac = true;
-            this.dailyData.energy.ac_hours = parseInt(hoursMatch[0]);
-            return true;
-        }
-        
-        // Check for simple yes
-        if (patterns.yes.test(msg)) {
-            this.dailyData.energy.ac = true;
-            this.dailyData.energy.ac_hours = 2; // Default 2 hours if not specified
-            return true;
-        }
-        
-        // Check for no
-        if (patterns.no.test(msg)) {
-            this.dailyData.energy.ac = false;
-            this.dailyData.energy.ac_hours = 0;
-            return true;
-        }
-        
-        return false;
-    }
-    
-    extractGeyserData(msg, patterns) {
-        if (patterns.yes.test(msg)) {
-            this.dailyData.energy.geyser = true;
-            return true;
-        }
-        if (patterns.no.test(msg)) {
-            this.dailyData.energy.geyser = false;
-            return true;
-        }
-        return false;
-    }
-    
-    extractWaterShowerData(msg, patterns) {
-        if (patterns.yes.test(msg)) {
-            this.dailyData.water.long_shower = true;
-            return true;
-        }
-        if (patterns.no.test(msg)) {
-            this.dailyData.water.long_shower = false;
-            return true;
-        }
-        return false;
-    }
-    
-    extractWaterLaundryData(msg, patterns) {
-        if (patterns.yes.test(msg)) {
-            this.dailyData.water.laundry = true;
-            return true;
-        }
-        if (patterns.no.test(msg)) {
-            this.dailyData.water.laundry = false;
-            return true;
-        }
-        return false;
-    }
-    
-    getHelpMessage(category) {
-        const helpMessages = {
-            transport: "I didn't quite understand. Please tell me how you traveled today. For example:\n• 'drove 15km' or 'car 15km'\n• 'took bus 10km' or 'train 5km'\n• 'walked' or 'cycled'\n• 'stayed home'",
-            energy: "Please answer with:\n• 'yes, 3 hours' or 'yes 3hr'\n• Just the number like '4' (I'll assume hours)\n• 'yes' (I'll estimate 2 hours)\n• 'no'",
-            geyser: "Please answer with 'yes' or 'no' 😊",
-            water_shower: "Please answer with 'yes' or 'no' 😊",
-            water_laundry: "Please answer with 'yes' or 'no' 😊"
-        };
-        return helpMessages[category] || "I didn't understand. Could you rephrase that?";
-    }
-    
-    completeTracking() {
-        const ecoScore = this.calculateEcoScore();
-        const summary = `\n\n✅ **Daily tracking complete!**\n\n📊 Your summary:\n` +
-            `🚗 Transport: ${this.dailyData.transport.car}km car, ${this.dailyData.transport.public}km public\n` +
-            `⚡ Energy: AC ${this.dailyData.energy.ac ? this.dailyData.energy.ac_hours + 'hrs' : 'not used'}, Geyser ${this.dailyData.energy.geyser ? 'used' : 'not used'}\n` +
-            `💧 Water: Long shower ${this.dailyData.water.long_shower ? 'yes' : 'no'}, Laundry ${this.dailyData.water.laundry ? 'yes' : 'no'}\n\n` +
-            `🌟 Eco Score: ${ecoScore}/100\n\n` +
-            this.getEcoTip(ecoScore);
-        
-        this.addMessage(summary, 'bot');
-        this.awaitingResponse = false;
-        
-        // Save to backend
-        this.saveDailyLog();
-    }
-    
     calculateEcoScore() {
-        let score = 100;
+        // ECOGUIDE DAILY SCORING FORMULA
+        // Base Score: 100 points (Perfect eco-friendly day)
+        // Formula: FinalScore = 100 - TransportPenalty - EnergyPenalty - WaterPenalty + GreenBonus
         
-        // Transport penalties
-        score -= this.dailyData.transport.car * 2; // -2 per km by car
-        score -= this.dailyData.transport.public * 0.5; // -0.5 per km public transport
-        if (this.dailyData.transport.walk_cycle) score += 10; // +10 bonus
+        let baseScore = 100;
+        let penalties = {
+            transport: 0,
+            energy: 0,
+            water: 0
+        };
+        let bonuses = {
+            transport: 0,
+            energy: 0,
+            water: 0
+        };
         
-        // Energy penalties
-        score -= this.dailyData.energy.ac_hours * 3; // -3 per AC hour
-        if (this.dailyData.energy.geyser) score -= 5;
+        // === TRANSPORT SCORING (Max penalty: 50 points) ===
+        // Car: -2 points per km (high carbon footprint)
+        penalties.transport += this.dailyData.transport.car * 2;
         
-        // Water penalties
-        if (this.dailyData.water.long_shower) score -= 8;
-        if (this.dailyData.water.laundry) score -= 5;
+        // Public transport: -0.5 points per km (shared carbon footprint)
+        penalties.transport += this.dailyData.transport.public * 0.5;
         
-        return Math.max(0, Math.min(100, Math.round(score)));
+        // Walk/Cycle bonus: +10 points (carbon-free transport)
+        if (this.dailyData.transport.walk_cycle > 0) {
+            bonuses.transport += 10;
+        }
+        
+        // === ENERGY SCORING (Max penalty: 30 points) ===
+        // AC usage: -3 points per hour (high energy consumption)
+        penalties.energy += this.dailyData.energy.ac_hours * 3;
+        
+        // Geyser/Water heater: -5 points (energy-intensive)
+        if (this.dailyData.energy.geyser) {
+            penalties.energy += 5;
+        }
+        
+        // === WATER SCORING (Max penalty: 20 points) ===
+        // Long shower: -8 points (excessive water waste)
+        if (this.dailyData.water.long_shower) {
+            penalties.water += 8;
+        }
+        
+        // Laundry: -5 points (water consumption)
+        if (this.dailyData.water.laundry) {
+            penalties.water += 5;
+        }
+        
+        // Cap penalties to prevent negative scores
+        penalties.transport = Math.min(penalties.transport, 50);
+        penalties.energy = Math.min(penalties.energy, 30);
+        penalties.water = Math.min(penalties.water, 20);
+        
+        // Calculate final score
+        const totalPenalties = penalties.transport + penalties.energy + penalties.water;
+        const totalBonuses = bonuses.transport + bonuses.energy + bonuses.water;
+        const finalScore = Math.max(0, Math.min(100, Math.round(baseScore - totalPenalties + totalBonuses)));
+        
+        return {
+            total: finalScore,
+            breakdown: {
+                base: baseScore,
+                transport: {
+                    carKm: this.dailyData.transport.car,
+                    carPenalty: -this.dailyData.transport.car * 2,
+                    publicKm: this.dailyData.transport.public,
+                    publicPenalty: -this.dailyData.transport.public * 0.5,
+                    walkCycle: this.dailyData.transport.walk_cycle,
+                    walkBonus: bonuses.transport,
+                    subtotal: bonuses.transport - penalties.transport
+                },
+                energy: {
+                    acHours: this.dailyData.energy.ac_hours,
+                    acPenalty: -this.dailyData.energy.ac_hours * 3,
+                    geyser: this.dailyData.energy.geyser,
+                    geyserPenalty: this.dailyData.energy.geyser ? -5 : 0,
+                    subtotal: -penalties.energy
+                },
+                water: {
+                    longShower: this.dailyData.water.long_shower,
+                    longShowerPenalty: this.dailyData.water.long_shower ? -8 : 0,
+                    laundry: this.dailyData.water.laundry,
+                    laundryPenalty: this.dailyData.water.laundry ? -5 : 0,
+                    subtotal: -penalties.water
+                }
+            }
+        };
     }
     
-    getEcoTip(score) {
+    getEcoTip(scoreData) {
+        const score = typeof scoreData === 'number' ? scoreData : scoreData.total;
         if (score >= 80) {
             return "🎉 Excellent work! You're doing great for the environment!";
         } else if (score >= 60) {
@@ -484,17 +431,20 @@ class DailyLogsApp {
     
     async saveDailyLog() {
         try {
+            const scoreData = this.calculateEcoScore();
             const response = await fetch('/api/daily-log', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     date: new Date().toISOString().split('T')[0],
                     data: this.dailyData,
-                    score: this.calculateEcoScore()
+                    score: scoreData.total,
+                    scoreBreakdown: scoreData.breakdown
                 })
             });
             if (response.ok) {
-                console.log('Daily log saved successfully');
+                console.log('Daily log saved successfully with score:', scoreData.total);
+                console.log('Score breakdown:', scoreData.breakdown);
             }
         } catch (error) {
             console.error('Failed to save daily log:', error);

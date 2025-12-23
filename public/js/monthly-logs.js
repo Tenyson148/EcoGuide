@@ -1,5 +1,3 @@
-// Monthly Logs Dashboard with Simulated AI Chatbot
-
 class MonthlyLogsApp {
     constructor() {
         this.monthlyData = {
@@ -8,63 +6,24 @@ class MonthlyLogsApp {
             travel: { flights: 0, long_trips: 0 }
         };
         this.conversationHistory = [];
-        this.currentQuestionIndex = 0;
-        this.questionFlow = [
-            {
-                question: "Hi! Let's review your monthly environmental impact for " + new Date().toLocaleDateString('en-US', { month: 'long' }) + " 🌍 First, what was your electricity consumption this month in units/kWh? (e.g., '250 units' or just '250')",
-                category: 'electricity',
-                patterns: {
-                    with_units: /(\d+)\s*(?:units?|kwh|kilowatt)/i,
-                    number_only: /^\d+$/,
-                    zero: /(?:zero|none|0)/i
-                }
-            },
-            {
-                question: "Do you use solar panels or renewable energy at home? (yes/no)",
-                category: 'solar',
-                patterns: {
-                    yes: /(?:yes|yeah|yep|yup|solar|renewable)/i,
-                    no: /(?:no|nope|nah|don't|dont)/i
-                }
-            },
-            {
-                question: "What was your water bill amount this month? (e.g., '$50' or '1500 rupees' or just the number)",
-                category: 'water_bill',
-                patterns: {
-                    with_currency: /(?:\$|rs\.?|rupees?)?\s*(\d+)/i,
-                    number_only: /^\d+$/,
-                    zero: /(?:zero|none|0)/i
-                }
-            },
-            {
-                question: "Do you practice water conservation (rainwater harvesting, efficient fixtures, etc.)? (yes/no)",
-                category: 'conservation',
-                patterns: {
-                    yes: /(?:yes|yeah|yep|yup)/i,
-                    no: /(?:no|nope|nah|don't|dont)/i
-                }
-            },
-            {
-                question: "How many flights did you take this month? (Enter a number, or '0' if none)",
-                category: 'flights',
-                patterns: {
-                    number: /^\d+$/,
-                    with_text: /(\d+)\s*(?:flight|trip)/i,
-                    zero: /(?:zero|none|no|0)/i
-                }
-            },
-            {
-                question: "How many long-distance trips (>200km by car/train) did you take? (Enter a number, or '0' if none)",
-                category: 'long_trips',
-                patterns: {
-                    number: /^\d+$/,
-                    with_text: /(\d+)\s*(?:trip|journey)/i,
-                    zero: /(?:zero|none|no|0)/i
-                }
-            }
-        ];
-        this.awaitingResponse = false;
-        this.currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        this.dataCollected = false;
+        this.currentMonth = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+        
+        this.GEMINI_API_KEY = 'AIzaSyCT8zuQHfpCQuV07A47gZHr5wHyLWLg1KA';
+        this.GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+        
+        this.systemPrompt = `You are an eco-friendly assistant helping users track their monthly environmental impact. 
+Your goal is to collect the following data naturally through conversation:
+1. Electricity consumption (in kWh or units)
+2. Whether they use solar/renewable energy (yes/no)
+3. Water bill amount (in any currency)
+4. Whether they practice water conservation (yes/no)
+5. Number of flights taken this month
+6. Number of long-distance trips (>200km by car/train)
+
+After collecting all data, calculate an eco score (0-100) and provide personalized tips.
+Be friendly, conversational, and encouraging. Ask follow-up questions if answers are unclear.
+Extract numbers and yes/no answers from natural responses.`;
         
         this.init();
     }
@@ -173,7 +132,7 @@ class MonthlyLogsApp {
                                     stroke-dasharray="552" stroke-dashoffset="138" class="transition-all duration-1000"/>
                             </svg>
                             <div class="absolute inset-0 flex flex-col items-center justify-center">
-                                <span class="text-5xl font-bold text-gray-900">75</span>
+                                <span class="text-5xl font-bold text-gray-900" id="eco-score-display">0</span>
                                 <span class="text-sm text-gray-600">Eco Score</span>
                             </div>
                         </div>
@@ -277,11 +236,9 @@ class MonthlyLogsApp {
     }
 
     startConversation() {
-        this.currentQuestionIndex = 0;
-        const firstQuestion = this.questionFlow[0].question;
-        this.addMessage(firstQuestion, 'bot');
-        this.conversationHistory.push({ role: 'assistant', content: firstQuestion });
-        this.awaitingResponse = true;
+        const greeting = `Hi! 👋 I'm your EcoGuide assistant. I'll help you track your environmental impact for ${this.currentMonth}. Let's start with a simple question: How much electricity did you use this month? (You can say something like "250 kWh" or "about 300 units")`;
+        this.addMessage(greeting, 'bot');
+        this.conversationHistory.push({ role: 'assistant', content: greeting });
     }
 
     sendMessage() {
@@ -301,205 +258,202 @@ class MonthlyLogsApp {
 
         this.addTypingIndicator();
 
-        setTimeout(() => {
-            this.removeTypingIndicator();
-            this.processUserResponse(message);
-        }, 800 + Math.random() * 400);
+        // Call Gemini AI
+        this.callGeminiAI(message);
     }
 
-    processUserResponse(userMessage) {
-        const currentQ = this.questionFlow[this.currentQuestionIndex];
-        
-        if (!userMessage || userMessage.trim().length === 0) {
-            this.addMessage("I didn't catch that. Could you please respond again?", 'bot');
-            return;
+    async callGeminiAI(userMessage) {
+        try {
+            const response = await fetch(`${this.GEMINI_API_URL}?key=${this.GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: `${this.systemPrompt}\n\nCurrent data collected: ${JSON.stringify(this.monthlyData)}\n\nUser says: "${userMessage}"\n\nRespond naturally and extract any relevant data. If all 6 data points are collected, calculate eco score and provide summary.`
+                        }]
+                    }]
+                })
+            });
+
+            const data = await response.json();
+            this.removeTypingIndicator();
+
+            // Check for API errors
+            if (data.error) {
+                console.error('Gemini API Error:', data.error);
+                if (data.error.code === 400) {
+                    this.addMessage("⚠️ API key error. Please verify your Gemini API key is correct and has the right permissions. Get a free key at https://aistudio.google.com/apikey", 'bot');
+                } else if (data.error.code === 429) {
+                    this.addMessage("⏰ Rate limit reached. Please wait a moment and try again.", 'bot');
+                } else {
+                    this.addMessage(`❌ API Error: ${data.error.message}`, 'bot');
+                }
+                return;
+            }
+
+            if (data.candidates && data.candidates[0]) {
+                const aiResponse = data.candidates[0].content.parts[0].text;
+                this.addMessage(aiResponse, 'bot');
+                this.conversationHistory.push({ role: 'assistant', content: aiResponse });
+                
+                // Try to extract data from user message
+                this.extractDataFromConversation(userMessage);
+            } else {
+                throw new Error('No response from AI');
+            }
+        } catch (error) {
+            console.error('Gemini AI Error:', error);
+            this.removeTypingIndicator();
+            this.addMessage("❌ Connection failed. Check console for details. Make sure you have a valid API key from https://aistudio.google.com/apikey", 'bot');
         }
-        
-        const lowerMsg = userMessage.toLowerCase().trim();
-        let dataExtracted = false;
-        
-        switch(currentQ.category) {
-            case 'electricity':
-                dataExtracted = this.extractElectricityData(lowerMsg, currentQ.patterns);
-                break;
-            case 'solar':
-                dataExtracted = this.extractSolarData(lowerMsg, currentQ.patterns);
-                break;
-            case 'water_bill':
-                dataExtracted = this.extractWaterBillData(lowerMsg, currentQ.patterns);
-                break;
-            case 'conservation':
-                dataExtracted = this.extractConservationData(lowerMsg, currentQ.patterns);
-                break;
-            case 'flights':
-                dataExtracted = this.extractFlightsData(lowerMsg, currentQ.patterns);
-                break;
-            case 'long_trips':
-                dataExtracted = this.extractLongTripsData(lowerMsg, currentQ.patterns);
-                break;
-        }
-        
-        if (!dataExtracted) {
-            this.addMessage(this.getHelpMessage(currentQ.category), 'bot');
-            return;
-        }
-        
-        const acknowledgments = [
-            "Got it! 📝",
-            "Thanks! ✓",
-            "Noted! 👍",
-            "Perfect! ✨",
-            "Great! 🌟"
-        ];
-        const ack = acknowledgments[Math.floor(Math.random() * acknowledgments.length)];
-        
-        this.currentQuestionIndex++;
-        
-        if (this.currentQuestionIndex < this.questionFlow.length) {
-            const nextQuestion = this.questionFlow[this.currentQuestionIndex].question;
-            this.addMessage(`${ack} ${nextQuestion}`, 'bot');
-            this.conversationHistory.push({ role: 'assistant', content: nextQuestion });
-        } else {
-            this.completeTracking();
-        }
-        
-        this.render();
     }
-    
-    extractElectricityData(msg, patterns) {
-        const unitsMatch = msg.match(patterns.with_units);
-        if (unitsMatch) {
-            this.monthlyData.electricity.units = parseInt(unitsMatch[1]);
-            return true;
-        }
-        if (patterns.number_only.test(msg)) {
-            this.monthlyData.electricity.units = parseInt(msg);
-            return true;
-        }
-        if (patterns.zero.test(msg)) {
-            this.monthlyData.electricity.units = 0;
-            return true;
-        }
-        return false;
-    }
-    
-    extractSolarData(msg, patterns) {
-        if (patterns.yes.test(msg)) {
-            this.monthlyData.electricity.solar = true;
-            return true;
-        }
-        if (patterns.no.test(msg)) {
-            this.monthlyData.electricity.solar = false;
-            return true;
-        }
-        return false;
-    }
-    
-    extractWaterBillData(msg, patterns) {
-        const billMatch = msg.match(patterns.with_currency);
-        if (billMatch) {
-            this.monthlyData.water.bill = parseInt(billMatch[1]);
-            return true;
-        }
-        if (patterns.number_only.test(msg)) {
-            this.monthlyData.water.bill = parseInt(msg);
-            return true;
-        }
-        if (patterns.zero.test(msg)) {
-            this.monthlyData.water.bill = 0;
-            return true;
-        }
-        return false;
-    }
-    
-    extractConservationData(msg, patterns) {
-        if (patterns.yes.test(msg)) {
-            this.monthlyData.water.conservation = true;
-            return true;
-        }
-        if (patterns.no.test(msg)) {
-            this.monthlyData.water.conservation = false;
-            return true;
-        }
-        return false;
-    }
-    
-    extractFlightsData(msg, patterns) {
-        if (patterns.zero.test(msg)) {
-            this.monthlyData.travel.flights = 0;
-            return true;
-        }
-        const flightMatch = msg.match(patterns.with_text);
-        if (flightMatch) {
-            this.monthlyData.travel.flights = parseInt(flightMatch[1]);
-            return true;
-        }
-        if (patterns.number.test(msg)) {
-            this.monthlyData.travel.flights = parseInt(msg);
-            return true;
-        }
-        return false;
-    }
-    
-    extractLongTripsData(msg, patterns) {
-        if (patterns.zero.test(msg)) {
-            this.monthlyData.travel.long_trips = 0;
-            return true;
-        }
-        const tripMatch = msg.match(patterns.with_text);
-        if (tripMatch) {
-            this.monthlyData.travel.long_trips = parseInt(tripMatch[1]);
-            return true;
-        }
-        if (patterns.number.test(msg)) {
-            this.monthlyData.travel.long_trips = parseInt(msg);
-            return true;
-        }
-        return false;
-    }
-    
-    getHelpMessage(category) {
-        const helpMessages = {
-            electricity: "Please tell me your electricity consumption. For example:\n• '250 units' or '250 kWh'\n• Just the number like '250'\n• '0' if you don't know",
-            solar: "Please answer with 'yes' or 'no' 😊",
-            water_bill: "Please tell me your water bill amount. For example:\n• '$50' or '1500'\n• Just the number\n• '0' if not applicable",
-            conservation: "Please answer with 'yes' or 'no' 😊",
-            flights: "Please tell me the number of flights. For example:\n• '2 flights' or just '2'\n• '0' or 'none' if you didn't fly",
-            long_trips: "Please tell me the number of long trips. For example:\n• '3 trips' or just '3'\n• '0' or 'none' if you didn't take any"
-        };
-        return helpMessages[category] || "I didn't understand. Could you rephrase that?";
-    }
-    
-    completeTracking() {
-        const ecoScore = this.calculateEcoScore();
-        const summary = `\n\n✅ **Monthly tracking complete for ${this.currentMonth}!**\n\n📊 Your summary:\n` +
-            `⚡ Electricity: ${this.monthlyData.electricity.units} units${this.monthlyData.electricity.solar ? ' (Solar ☀️)' : ''}\n` +
-            `💧 Water: ₹${this.monthlyData.water.bill}${this.monthlyData.water.conservation ? ' (Conservation ✓)' : ''}\n` +
-            `✈️ Travel: ${this.monthlyData.travel.flights} flights, ${this.monthlyData.travel.long_trips} road trips\n\n` +
-            `🌟 Eco Score: ${ecoScore}/100\n\n` +
-            this.getEcoTip(ecoScore);
+
+    extractDataFromConversation(message) {
+        const msg = message.toLowerCase();
         
-        this.addMessage(summary, 'bot');
-        this.awaitingResponse = false;
-        this.saveMonthlyLog();
+        // Extract numbers
+        const numbers = message.match(/\d+/g);
+        
+        // Electricity
+        if (/electricity|kwh|units|power/.test(msg) && numbers) {
+            this.monthlyData.electricity.units = parseInt(numbers[0]);
+        }
+        
+        // Solar
+        if (/solar|renewable/.test(msg)) {
+            this.monthlyData.electricity.solar = /yes|yeah|have|use/.test(msg);
+        }
+        
+        // Water bill
+        if (/water|bill/.test(msg) && numbers) {
+            this.monthlyData.water.bill = parseInt(numbers[0]);
+        }
+        
+        // Conservation
+        if (/conservation|rainwater|harvest/.test(msg)) {
+            this.monthlyData.water.conservation = /yes|yeah|do|practice/.test(msg);
+        }
+        
+        // Flights
+        if (/flight|plane|fly/.test(msg) && numbers) {
+            this.monthlyData.travel.flights = parseInt(numbers[0]);
+        }
+        
+        // Long trips
+        if (/trip|travel|drive/.test(msg) && numbers) {
+            this.monthlyData.travel.long_trips = parseInt(numbers[0]);
+        }
+        
+        // Update display
+        this.updateDashboard();
+        
+        // Check if all data collected
+        if (this.isDataComplete() && !this.dataCollected) {
+            this.dataCollected = true;
+            this.saveMonthlyLog();
+        }
     }
-    
+
+    isDataComplete() {
+        return this.monthlyData.electricity.units > 0 ||
+               this.monthlyData.water.bill > 0 ||
+               this.monthlyData.travel.flights >= 0;
+    }
+
+    updateDashboard() {
+        const scoreData = this.calculateEcoScore();
+        const scoreDisplay = document.getElementById('eco-score-display');
+        if (scoreDisplay) {
+            scoreDisplay.textContent = scoreData.total.toString();
+        }
+    }
+
     calculateEcoScore() {
-        let score = 100;
+        // ECOGUIDE MONTHLY SCORING FORMULA
+        // Base Score: 100 points (Perfect eco-friendly month)
+        // Formula: FinalScore = 100 - ElectricityPenalty - WaterPenalty - TravelPenalty + GreenBonus
         
-        score -= Math.min(this.monthlyData.electricity.units * 0.1, 30);
-        if (this.monthlyData.electricity.solar) score += 15;
+        let baseScore = 100;
+        let penalties = {
+            electricity: 0,
+            water: 0,
+            travel: 0
+        };
+        let bonuses = {
+            electricity: 0,
+            water: 0,
+            travel: 0
+        };
         
-        score -= Math.min(this.monthlyData.water.bill * 0.05, 20);
-        if (this.monthlyData.water.conservation) score += 10;
+        // === ELECTRICITY SCORING (Max penalty: 30 points) ===
+        // Standard consumption: -0.1 points per kWh (capped at 30 points)
+        // Formula: min(units × 0.1, 30)
+        const electricityPenalty = Math.min(this.monthlyData.electricity.units * 0.1, 30);
+        penalties.electricity += electricityPenalty;
         
-        score -= this.monthlyData.travel.flights * 15;
-        score -= this.monthlyData.travel.long_trips * 5;
+        // Solar energy bonus: +15 points (renewable energy usage)
+        if (this.monthlyData.electricity.solar) {
+            bonuses.electricity += 15;
+        }
         
-        return Math.max(0, Math.min(100, Math.round(score)));
+        // === WATER SCORING (Max penalty: 20 points) ===
+        // Water bill penalty: -0.05 points per rupee (capped at 20 points)
+        // Formula: min(bill × 0.05, 20)
+        const waterPenalty = Math.min(this.monthlyData.water.bill * 0.05, 20);
+        penalties.water += waterPenalty;
+        
+        // Water conservation bonus: +10 points (rainwater harvesting, etc.)
+        if (this.monthlyData.water.conservation) {
+            bonuses.water += 10;
+        }
+        
+        // === TRAVEL SCORING (Max penalty: 50 points) ===
+        // Flights: -15 points per flight (high carbon emissions)
+        penalties.travel += this.monthlyData.travel.flights * 15;
+        
+        // Long road trips: -5 points per trip (moderate carbon emissions)
+        penalties.travel += this.monthlyData.travel.long_trips * 5;
+        
+        // Cap travel penalties
+        penalties.travel = Math.min(penalties.travel, 50);
+        
+        // Calculate final score
+        const totalPenalties = penalties.electricity + penalties.water + penalties.travel;
+        const totalBonuses = bonuses.electricity + bonuses.water + bonuses.travel;
+        const finalScore = Math.max(0, Math.min(100, Math.round(baseScore - totalPenalties + totalBonuses)));
+        
+        return {
+            total: finalScore,
+            breakdown: {
+                base: baseScore,
+                electricity: {
+                    units: this.monthlyData.electricity.units,
+                    penalty: -electricityPenalty,
+                    solar: this.monthlyData.electricity.solar,
+                    solarBonus: bonuses.electricity,
+                    subtotal: bonuses.electricity - penalties.electricity
+                },
+                water: {
+                    bill: this.monthlyData.water.bill,
+                    penalty: -waterPenalty,
+                    conservation: this.monthlyData.water.conservation,
+                    conservationBonus: bonuses.water,
+                    subtotal: bonuses.water - penalties.water
+                },
+                travel: {
+                    flights: this.monthlyData.travel.flights,
+                    flightsPenalty: -this.monthlyData.travel.flights * 15,
+                    longTrips: this.monthlyData.travel.long_trips,
+                    tripsPenalty: -this.monthlyData.travel.long_trips * 5,
+                    subtotal: -penalties.travel
+                }
+            }
+        };
     }
     
-    getEcoTip(score) {
+    getEcoTip(scoreData) {
+        const score = typeof scoreData === 'number' ? scoreData : scoreData.total;
         if (score >= 80) {
             return "🎉 Outstanding! You're a sustainability champion!";
         } else if (score >= 60) {
@@ -513,17 +467,27 @@ class MonthlyLogsApp {
     
     async saveMonthlyLog() {
         try {
+            const scoreData = this.calculateEcoScore();
+            
+            // Update the display
+            const scoreDisplay = document.getElementById('eco-score-display');
+            if (scoreDisplay) {
+                scoreDisplay.textContent = scoreData.total.toString();
+            }
+            
             const response = await fetch('/api/monthly-log', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     month: this.currentMonth,
                     data: this.monthlyData,
-                    score: this.calculateEcoScore()
+                    score: scoreData.total,
+                    scoreBreakdown: scoreData.breakdown
                 })
             });
             if (response.ok) {
-                console.log('Monthly log saved successfully');
+                console.log('Monthly log saved successfully. Eco Score:', scoreData.total);
+                console.log('Score breakdown:', scoreData.breakdown);
             }
         } catch (error) {
             console.error('Failed to save monthly log:', error);

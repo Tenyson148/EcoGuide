@@ -1,27 +1,93 @@
 // Leaderboard Page
 class LeaderboardApp {
     constructor() {
-        this.leaderboardData = [
-            { rank: 1, name: "Sarah Chen", avatar: "👤", country: "Singapore", countryFlag: "🇸🇬", points: 95, badge: "🏆", trend: "up" },
-            { rank: 2, name: "Marcus Silva", avatar: "👤", country: "Brazil", countryFlag: "🇧🇷", points: 92, badge: "🥈", trend: "up" },
-            { rank: 3, name: "Aisha Patel", avatar: "👤", country: "India", countryFlag: "🇮🇳", points: 89, badge: "🥉", trend: "same" },
-            { rank: 4, name: "Lars Anderson", avatar: "👤", country: "Sweden", countryFlag: "🇸🇪", points: 87, badge: "", trend: "up" },
-            { rank: 5, name: "Emma Dubois", avatar: "👤", country: "France", countryFlag: "🇫🇷", points: 85, badge: "", trend: "down" },
-            { rank: 6, name: "Kenji Tanaka", avatar: "👤", country: "Japan", countryFlag: "🇯🇵", points: 83, badge: "", trend: "up" },
-            { rank: 7, name: "Sofia Rodriguez", avatar: "👤", country: "Spain", countryFlag: "🇪🇸", points: 81, badge: "", trend: "same" },
-            { rank: 8, name: "Ahmed Hassan", avatar: "👤", country: "Egypt", countryFlag: "🇪🇬", points: 79, badge: "", trend: "up" },
-            { rank: 9, name: "Olivia Smith", avatar: "👤", country: "Australia", countryFlag: "🇦🇺", points: 76, badge: "", trend: "down" },
-            { rank: 10, name: "Diego Martinez", avatar: "👤", country: "Mexico", countryFlag: "🇲🇽", points: 74, badge: "", trend: "same" }
-        ];
-        
+        this.leaderboardData = [];
         this.news = [];
         this.init();
     }
 
     async init() {
+        await this.loadLeaderboardData();
         await this.fetchEnvironmentalNews();
         this.render();
         this.attachEventListeners();
+    }
+
+    async loadLeaderboardData() {
+        try {
+            // Fetch current user's real score from server
+            const userScoreResponse = await fetch('/api/user-score');
+            const userScoreData = await userScoreResponse.json();
+            
+            const response = await fetch('/data/leaderboard.json');
+            if (!response.ok) {
+                throw new Error('Failed to load leaderboard data');
+            }
+            const data = await response.json();
+            
+            // Use real score from monthly logs
+            const realScore = userScoreData.success ? userScoreData.score : 0;
+            const username = userScoreData.username || "You";
+            
+            // Calculate rank based on real score
+            let userRank = 1;
+            for (const user of data.users) {
+                if (user.points > realScore) {
+                    userRank++;
+                }
+            }
+            
+            this.currentUser = { 
+                rank: userRank, 
+                name: username, 
+                points: realScore 
+            };
+            
+            // Insert current user into leaderboard at their rank position
+            const leaderboardWithUser = [...data.users];
+            
+            // Remove any user at the same rank and insert current user
+            const insertIndex = leaderboardWithUser.findIndex(u => u.rank >= userRank);
+            
+            if (insertIndex !== -1) {
+                leaderboardWithUser.splice(insertIndex, 0, {
+                    rank: userRank,
+                    name: username,
+                    avatar: "👤",
+                    points: realScore,
+                    badge: userRank === 1 ? "🏆" : userRank === 2 ? "🥈" : userRank === 3 ? "🥉" : "",
+                    trend: "same",
+                    isCurrentUser: true
+                });
+            } else {
+                leaderboardWithUser.push({
+                    rank: userRank,
+                    name: username,
+                    avatar: "👤",
+                    points: realScore,
+                    badge: "",
+                    trend: "same",
+                    isCurrentUser: true
+                });
+            }
+            
+            // Update ranks for users below current user
+            leaderboardWithUser.forEach((user, index) => {
+                if (index >= insertIndex && !user.isCurrentUser) {
+                    user.rank++;
+                }
+            });
+            
+            this.leaderboardData = leaderboardWithUser;
+            console.log('Leaderboard data loaded with real score:', realScore);
+        } catch (error) {
+            console.error('Error loading leaderboard data:', error);
+            // Fallback data
+            this.leaderboardData = [
+                { rank: 1, name: "Guest User", avatar: "👤", points: 0, badge: "", trend: "same" }
+            ];
+            this.currentUser = { rank: 1, name: "You", points: 0 };
+        }
     }
 
     async fetchEnvironmentalNews() {
@@ -114,161 +180,185 @@ class LeaderboardApp {
         const rest = this.leaderboardData.slice(3);
 
         return `
-            <div class="bg-white rounded-3xl shadow-xl p-8 max-w-4xl mx-auto">
-                <!-- Header -->
+            <!-- Hero Section -->
+            <div class="bg-gradient-to-br from-primary-green via-medium-green to-light-green rounded-3xl shadow-2xl p-8 mb-8 text-white">
                 <div class="flex items-center justify-between mb-6">
-                    <h1 class="text-3xl font-bold text-gray-900">Leaderboard</h1>
-                    <button class="text-gray-400 hover:text-gray-600 transition">
-                        <i class='bx bx-x text-3xl'></i>
-                    </button>
-                </div>
-
-                <!-- Podium Section -->
-                <div class="grid grid-cols-3 gap-4 mb-8 pb-8 border-b border-gray-200">
-                    ${this.renderPodium(top3)}
-                </div>
-
-                <!-- Winner Announcement -->
-                <div class="bg-gradient-to-r from-primary-green/10 to-medium-green/10 rounded-xl p-4 mb-8 text-center border-2 border-primary-green/20">
-                    <p class="text-gray-900 font-semibold mb-2">🌟 Top Eco Champion!</p>
-                    <p class="text-gray-600 text-sm">${top3[0].name} leads with the highest sustainability score (95) - Outstanding eco-friendly habits!</p>
-                </div>
-
-                <!-- Latest News & Chart Section -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    <!-- Latest News -->
                     <div>
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Latest news</h3>
-                            <a href="#" class="text-sm text-gray-600 hover:text-primary-green transition">See all</a>
+                        <h1 class="text-4xl font-bold mb-2 flex items-center gap-3">
+                            <i class='bx bx-trophy text-5xl trophy-icon'></i>
+                            Global Eco Champions
+                        </h1>
+                        <p class="text-white/80 text-lg">Compete with eco-warriors worldwide</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-white/70">Last Updated</p>
+                        <p class="font-semibold">${new Date().toLocaleDateString()}</p>
+                    </div>
+                </div>
+                
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-4">
+                        <i class='bx bx-user text-2xl mb-2'></i>
+                        <p class="text-2xl font-bold">${this.leaderboardData.length}</p>
+                        <p class="text-sm text-white/70">Active Users</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-4">
+                        <i class='bx bx-trophy text-2xl mb-2'></i>
+                        <p class="text-2xl font-bold">${this.leaderboardData[0]?.points || 0}</p>
+                        <p class="text-sm text-white/70">Top Score</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-4">
+                        <i class='bx bx-leaf text-2xl mb-2'></i>
+                        <p class="text-2xl font-bold">${Math.round(this.leaderboardData.reduce((sum, u) => sum + u.points, 0) / this.leaderboardData.length)}</p>
+                        <p class="text-sm text-white/70">Avg Eco Score</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Main Leaderboard -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-3xl shadow-xl overflow-hidden">
+                        <!-- Podium Winners -->
+                        <div class="bg-gradient-to-br from-gray-50 to-white p-8 border-b-2 border-primary-green/10">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                <i class='bx bx-crown text-yellow-500 text-3xl'></i>
+                                Top 3 Champions
+                            </h2>
+                            <div class="grid grid-cols-3 gap-4">
+                                ${this.renderModernPodium(top3)}
+                            </div>
                         </div>
-                        <div class="space-y-3">
+
+                        <!-- Full Rankings -->
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <i class='bx bx-list-ul text-primary-green text-2xl'></i>
+                                Full Rankings
+                            </h3>
+                            <div class="space-y-2">
+                                ${this.leaderboardData.map(user => this.renderModernLeaderboardRow(user)).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    <!-- Latest News -->
+                    <div class="bg-white rounded-3xl shadow-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <i class='bx bx-news text-primary-green text-2xl'></i>
+                                Eco News
+                            </h3>
+                        </div>
+                        <div class="space-y-4">
                             ${this.news.map(item => `
-                                <a href="${item.url || '#'}" target="_blank" class="news-card flex gap-3 p-2 rounded-lg hover:bg-gray-50 transition">
-                                    <img src="${item.image}" alt="News" class="w-16 h-16 rounded-lg object-cover flex-shrink-0" onerror="this.src='https://images.unsplash.com/photo-1569163139394-de4798aa62b6?w=400'">
-                                    <div class="flex-1 min-w-0">
-                                        <h4 class="text-sm font-semibold text-gray-900 line-clamp-2 mb-1">${item.title}</h4>
-                                        <p class="text-xs text-gray-600 line-clamp-1">${item.description}</p>
+                                <a href="${item.url || '#'}" target="_blank" class="block group">
+                                    <div class="news-card rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all">
+                                        <img src="${item.image}" alt="News" class="w-full h-32 object-cover" onerror="this.src='https://images.unsplash.com/photo-1569163139394-de4798aa62b6?w=400'">
+                                        <div class="p-4 bg-white">
+                                            <h4 class="text-sm font-semibold text-gray-900 line-clamp-2 mb-2 group-hover:text-primary-green transition">${item.title}</h4>
+                                            <p class="text-xs text-gray-500">${item.date}</p>
+                                        </div>
                                     </div>
                                 </a>
                             `).join('')}
                         </div>
                     </div>
 
-                    <!-- Last Game Rating Chart -->
-                    <div>
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Last game rating</h3>
-                            <a href="#" class="text-sm text-gray-600 hover:text-primary-green transition">See all</a>
+                    <!-- Your Progress Card -->
+                    <div class="bg-gradient-to-br from-primary-green to-medium-green rounded-3xl shadow-xl p-6 text-white">
+                        <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                            <i class='bx bx-user-circle text-2xl'></i>
+                            Your Progress
+                        </h3>
+                        <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 mb-4">
+                            <p class="text-sm text-white/70 mb-1">Current Rank</p>
+                            <p class="text-4xl font-bold">#${this.currentUser.rank}</p>
                         </div>
-                        <div class="bg-gray-50 rounded-xl p-4 h-48 relative">
-                            <svg viewBox="0 0 300 150" class="w-full h-full">
-                                <!-- Grid lines -->
-                                <line x1="0" y1="130" x2="300" y2="130" stroke="#e5e7eb" stroke-width="1"/>
-                                <line x1="0" y1="100" x2="300" y2="100" stroke="#e5e7eb" stroke-width="1"/>
-                                <line x1="0" y1="70" x2="300" y2="70" stroke="#e5e7eb" stroke-width="1"/>
-                                <line x1="0" y1="40" x2="300" y2="40" stroke="#e5e7eb" stroke-width="1"/>
-                                
-                                <!-- Orange line (historical) -->
-                                <polyline 
-                                    points="0,120 50,115 100,110 150,105 200,95"
-                                    fill="none" 
-                                    stroke="#fb923c" 
-                                    stroke-width="2"
-                                />
-                                
-                                <!-- Green line (current) -->
-                                <polyline 
-                                    points="0,110 50,105 100,100 150,85 200,70 250,30 280,20"
-                                    fill="none" 
-                                    stroke="#22c55e" 
-                                    stroke-width="3"
-                                />
-                                
-                                <!-- End point -->
-                                <circle cx="280" cy="20" r="4" fill="#22c55e"/>
-                                <circle cx="280" cy="20" r="8" fill="none" stroke="#22c55e" stroke-width="2"/>
-                                
-                                <!-- Value label -->
-                                <text x="280" y="15" text-anchor="middle" class="text-xs font-bold" fill="#1f2937">71</text>
-                            </svg>
+                        <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 mb-4">
+                            <p class="text-sm text-white/70 mb-1">Your Eco Score</p>
+                            <p class="text-4xl font-bold">${this.currentUser.points}</p>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Full Leaderboard Table -->
-                <div class="overflow-hidden">
-                    <div class="grid grid-cols-4 gap-4 text-sm text-gray-500 font-medium mb-4 px-4">
-                        <div>Place</div>
-                        <div>Name</div>
-                        <div>Country</div>
-                        <div class="text-right">Eco Score</div>
-                    </div>
-                    
-                    <div class="space-y-2">
-                        ${this.leaderboardData.map(user => this.renderLeaderboardRow(user)).join('')}
+                        <button class="w-full bg-white text-primary-green py-3 rounded-xl font-semibold hover:bg-gray-100 transition shadow-lg">
+                            Improve Your Score
+                        </button>
                     </div>
                 </div>
             </div>
         `;
     }
 
-    renderPodium(top3) {
+    renderModernPodium(top3) {
         const positions = [
-            { index: 1, place: '2nd', prize: '92 ECO SCORE', color: 'bg-gray-100' },
-            { index: 0, place: '1st', prize: '95 ECO SCORE', color: 'bg-yellow-50' },
-            { index: 2, place: '3rd', prize: '89 ECO SCORE', color: 'bg-orange-50' }
+            { index: 1, place: '2', medal: '🥈', bgColor: 'from-gray-300 to-gray-400', height: 'h-32' },
+            { index: 0, place: '1', medal: '🏆', bgColor: 'from-yellow-400 to-yellow-500', height: 'h-40' },
+            { index: 2, place: '3', medal: '🥉', bgColor: 'from-orange-400 to-orange-500', height: 'h-28' }
         ];
 
-        return positions.map(({ index, place, prize, color }) => {
+        return positions.map(({ index, place, medal, bgColor, height }) => {
             const user = top3[index];
             return `
-                <div class="podium-card text-center">
-                    <div class="mb-3 flex justify-center">
-                        <div class="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-3xl">
+                <div class="flex flex-col items-center">
+                    <div class="relative mb-3">
+                        <div class="w-16 h-16 rounded-full bg-gradient-to-br ${bgColor} flex items-center justify-center text-3xl shadow-lg ring-4 ring-white">
                             ${user.avatar}
                         </div>
+                        <div class="absolute -top-2 -right-2 text-3xl">${medal}</div>
                     </div>
-                    <p class="font-semibold text-gray-900 mb-1">${user.name}</p>
-                    <div class="${color} rounded-lg p-3 mt-2">
-                        <p class="font-bold text-gray-900 mb-1">${place}</p>
-                        <p class="text-xs text-gray-600">${prize}</p>
+                    <p class="font-bold text-gray-900 text-sm mb-2">${user.name}</p>
+                    <div class="bg-gradient-to-br ${bgColor} ${height} w-full rounded-t-xl flex flex-col items-center justify-start pt-4 shadow-lg">
+                        <p class="text-2xl font-bold text-white">#${place}</p>
+                        <p class="text-lg font-semibold text-white mt-1">${user.points}</p>
+                        <p class="text-xs text-white/80">ECO SCORE</p>
                     </div>
                 </div>
             `;
         }).join('');
     }
 
-    renderLeaderboardRow(user) {
+    renderModernLeaderboardRow(user) {
         const trendIcons = {
-            up: '<i class="bx bx-up-arrow-alt text-green-500"></i>',
-            down: '<i class="bx bx-down-arrow-alt text-red-500"></i>',
-            same: '<i class="bx bx-minus text-gray-400"></i>'
+            up: '<i class="bx bx-trending-up text-green-500 text-xl"></i>',
+            down: '<i class="bx bx-trending-down text-red-500 text-xl"></i>',
+            same: '<i class="bx bx-minus text-gray-400 text-xl"></i>'
         };
+        
+        const rankBadgeColor = user.rank <= 3 ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white' : 'bg-gray-100 text-gray-700';
+        const isCurrentUser = user.isCurrentUser;
+        const highlightClass = isCurrentUser ? 'from-primary-green/10 to-medium-green/10 border-2 border-primary-green shadow-lg' : 'from-gray-50 to-white border border-gray-100';
+        const nameDisplay = isCurrentUser ? `${user.name} <span class="text-xs bg-primary-green text-white px-2 py-1 rounded-full ml-2">YOU</span>` : user.name;
 
         return `
-            <div class="grid grid-cols-4 gap-4 items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
-                <div class="flex items-center gap-2">
-                    ${trendIcons[user.trend]}
-                    <span class="font-semibold text-gray-900">${user.rank}${user.rank === 1 ? 'st' : user.rank === 2 ? 'nd' : user.rank === 3 ? 'rd' : 'th'}</span>
-                </div>
-                
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-xl">
-                        ${user.avatar}
+            <div class="flex items-center justify-between p-4 bg-gradient-to-r ${highlightClass} rounded-xl hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+                <div class="flex items-center gap-4 flex-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 ${rankBadgeColor} rounded-lg flex items-center justify-center font-bold shadow-md">
+                            ${user.rank}
+                        </div>
+                        ${trendIcons[user.trend]}
                     </div>
-                    <span class="font-medium text-gray-900">${user.name}</span>
+                    
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full ${isCurrentUser ? 'bg-gradient-to-br from-yellow-400 to-orange-500 ring-4 ring-primary-green/30' : 'bg-gradient-to-br from-primary-green to-medium-green'} flex items-center justify-center text-xl shadow-md ring-2 ring-white">
+                            ${user.avatar}
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-900">${nameDisplay}</p>
+                            <p class="text-xs text-gray-500">${isCurrentUser ? 'That\'s you!' : 'Eco Champion'}</p>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="flex items-center gap-2">
-                    <span class="text-2xl">${user.countryFlag}</span>
-                    <span class="text-gray-700">${user.country}</span>
-                    ${user.badge ? `<span class="ml-2">${user.badge}</span>` : ''}
-                </div>
-                
-                <div class="text-right">
-                    <span class="font-bold text-primary-green">${user.points}</span>
-                    <span class="text-xs text-gray-500 ml-1">ECO</span>
+                <div class="flex items-center gap-4">
+                    ${user.badge ? `<span class="text-2xl">${user.badge}</span>` : ''}
+                    <div class="text-right">
+                        <p class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-green to-medium-green">${user.points}</p>
+                        <p class="text-xs text-gray-500 font-medium">ECO SCORE</p>
+                    </div>
                 </div>
             </div>
         `;

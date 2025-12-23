@@ -14,8 +14,8 @@ class FAQContactApp {
         root.innerHTML = `
             ${this.renderNavbar()}
             <main class="bg-gray-50">
-                ${this.renderFAQSection()}
                 ${this.renderContactSection()}
+                ${this.renderFAQSection()}
             </main>
             ${this.renderFooter()}
         `;

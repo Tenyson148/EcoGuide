@@ -10,12 +10,14 @@ interface ContentData {
     title: string;
     subtitle: string;
     description: string;
+    videoPlaceholder?: string;
   };
   sections: Array<{
-    id: string;
     icon: string;
     title: string;
-    content: string;
+    description: string;
+    bullets: string[];
+    image: string;
   }>;
   cta: {
     title: string;
@@ -30,7 +32,14 @@ function App() {
   useEffect(() => {
     fetch('/data/content.json')
       .then(res => res.json())
-      .then(data => setContent(data))
+      .then(data => {
+        console.log('Content loaded successfully:', data);
+        console.log('Number of sections:', data.sections?.length);
+        console.log('First section:', data.sections?.[0]);
+        console.log('First section image:', data.sections?.[0]?.image);
+        console.log('First section bullets:', data.sections?.[0]?.bullets);
+        setContent(data);
+      })
       .catch(err => console.error('Error loading content:', err));
   }, []);
 
@@ -51,7 +60,7 @@ function App() {
       <main>
         <Hero {...content.hero} />
         {content.sections.map((section, index) => (
-          <ContentSection key={section.id} {...section} index={index} />
+          <ContentSection key={index} {...section} index={index} />
         ))}
         <CTA {...content.cta} />
       </main>

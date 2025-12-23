@@ -1,0 +1,89 @@
+{
+  "users": [
+    {
+      "rank": 1,
+      "name": "Sarah Chen",
+      "avatar": "👤",
+      "points": 95,
+      "badge": "🏆",
+      "trend": "up"
+    },
+    {
+      "rank": 2,
+      "name": "Marcus Silva",
+      "avatar": "👤",
+      "points": 92,
+      "badge": "🥈",
+      "trend": "up"
+    },
+    {
+      "rank": 3,
+      "name": "Aisha Patel",
+      "avatar": "👤",
+      "points": 89,
+      "badge": "🥉",
+      "trend": "same"
+    },
+    {
+      "rank": 4,
+      "name": "Lars Anderson",
+      "avatar": "👤",
+      "points": 87,
+      "badge": "",
+      "trend": "up"
+    },
+    {
+      "rank": 5,
+      "name": "Emma Dubois",
+      "avatar": "👤",
+      "points": 85,
+      "badge": "",
+      "trend": "down"
+    },
+    {
+      "rank": 6,
+      "name": "Kenji Tanaka",
+      "avatar": "👤",
+      "points": 83,
+      "badge": "",
+      "trend": "up"
+    },
+    {
+      "rank": 7,
+      "name": "Sofia Rodriguez",
+      "avatar": "👤",
+      "points": 81,
+      "badge": "",
+      "trend": "same"
+    },
+    {
+      "rank": 8,
+      "name": "Ahmed Hassan",
+      "avatar": "👤",
+      "points": 79,
+      "badge": "",
+      "trend": "up"
+    },
+    {
+      "rank": 9,
+      "name": "Olivia Smith",
+      "avatar": "👤",
+      "points": 76,
+      "badge": "",
+      "trend": "down"
+    },
+    {
+      "rank": 10,
+      "name": "Diego Martinez",
+      "avatar": "👤",
+      "points": 74,
+      "badge": "",
+      "trend": "same"
+    }
+  ],
+  "currentUser": {
+    "rank": 8,
+    "name": "You",
+    "points": 79
+  }
+}
